@@ -2,6 +2,7 @@ package com.example.clienteschat;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -13,6 +14,9 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.example.clienteschat.db.AppDatabase;
+import com.example.clienteschat.db.Mensaje;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -21,6 +25,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.List;
 import java.util.Scanner;
 
 public class MainActivity extends AppCompatActivity {
@@ -30,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
     HandlerThread htEscritura;
     Handler handlerConnNRead;
     Handler handlerEscritura;
+
+    AppDatabase db;
 
     LinearLayout containerMensajes;
     EditText teclado;
@@ -41,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        db = AppDatabase.getDbInstance(this.getApplicationContext());
 
         htConnNRead = new HandlerThread("Conexion y Lectura");
         htConnNRead.start();
@@ -87,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
                         TextView nuevoMsg = new TextView(MainActivity.this);
                         //nuevoMsg.setId((int)System.currentTimeMillis());
                         nuevoMsg.setText(str);
+
+                        guardarMensaje(str);
 
                         mainActivity.runOnUiThread(new Runnable() {
                             @Override
@@ -159,6 +169,20 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    public void guardarMensaje(String mensaje){
+
+        Mensaje mensajeObj = new Mensaje();
+        mensajeObj.setContenido(mensaje);
+        db.mensajeDAO().insertMensaje(mensajeObj);
+
+        List<Mensaje> msg = db.mensajeDAO().getAllMensajes();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            msg.forEach(m -> Log.i("mensaje", m.toString()));
+        }
+
     }
 
 }
